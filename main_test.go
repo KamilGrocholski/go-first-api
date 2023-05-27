@@ -3,56 +3,39 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/mikalsqwe/go-api/book"
 )
 
-func setupFakeDatabase() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
-	}
+func TestApp(t *testing.T) {
+	t.Run("it should do smth", func(t *testing.T) {
+		t.Log("end")
+		Start("test.db")
 
-	return db
-}
-
-func TestingE2E(t *testing.T) {
-	db := setupFakeDatabase()
-	Start(db)
-
-	t.Run("it should create a movie ang get the movie", func(t *testing.T) {
-		router := setupRouter()
-
-		w := httptest.NewRecorder()
-
-		body := struct {
-			title string
-		}{
-			title: "Some Title",
+		bookPayload := &book.CreateBookPayload{
+			Title:       "Some title",
+			Description: "Some description",
+			AuthorsIds:  make([]string, 0),
 		}
 
-		out, err := json.Marshal(body)
+		out, stringifyErr := json.Marshal(bookPayload)
+
+		if stringifyErr != nil {
+			panic("")
+		}
+
+		res, err := http.Post("/create/book", "application/json", bytes.NewBuffer(out))
 		if err != nil {
-			log.Fatal("Marshal error")
+			t.Errorf("error")
 		}
 
-		createRequest, _ := http.NewRequest("POST", "/movie/create", bytes.NewBuffer(out))
-		router.ServeHTTP(w, createRequest)
+		res.Body.Close()
 
-		assert.Equal(t, 200, w.Code)
-
-		getRequest, _ := http.NewRequest("GET", "/movie?id=1", nil)
-		router.ServeHTTP(w, getRequest)
-
-		expectedGetBody := `{"title": "Some Title"}`
-
-		assert.Equal(t, 200, w.Code)
-		assert.Equal(t, expectedGetBody, w.Body.String())
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("not 200")
+		}
+		t.Log("end")
 	})
 }
