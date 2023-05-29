@@ -3,8 +3,7 @@ package db
 import (
 	"log"
 
-	"github.com/mikalsqwe/go-api/author"
-	"github.com/mikalsqwe/go-api/book"
+	"github.com/mikalsqwe/go-api/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -17,5 +16,7 @@ func ConnectDatabase(dbName string) {
 		log.Fatalf("failed connecting to the database: %v", dbName)
 	}
 
-	db.AutoMigrate(&book.Book{}, &author.Author{})
+	db.AutoMigrate(&models.Book{})
+
+	DB = db
 }
